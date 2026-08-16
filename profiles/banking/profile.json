@@ -1,0 +1,6 @@
+{
+  "name": "banking",
+  "description": "Banking and mortgage meeting vocabulary",
+  "industry": "banking",
+  "processors": ["vocabulary_correction", "context_correction", "transcript_cleanup", "transcript_intelligence", "speaker_formatting"]
+}

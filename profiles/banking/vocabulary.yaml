@@ -1,0 +1,205 @@
+# Banking profile vocabulary
+# Each entry: canonical term with aliases, confidence, and optional context words
+
+APPL_ID:
+  aliases:
+    - Apple ID
+    - Apple I
+    - AppleID
+    - Apple Id
+    - app ID
+    - app I.D.
+    - APLID
+  confidence: 0.95
+  context:
+    - loan
+    - servicing
+    - AL
+    - LN
+    - system
+
+LN:
+  aliases:
+    - Lane
+    - Ellen
+    - Elaine
+    - Len
+  confidence: 0.88
+  context:
+    - loan
+    - number
+
+WL:
+  aliases:
+    - W.L.
+    - double-u L
+  confidence: 0.85
+  context: []
+
+WCA:
+  aliases:
+    - W.C.A.
+    - WC A
+  confidence: 0.85
+  context: []
+
+AL:
+  aliases:
+    - A.L.
+    - A L
+  confidence: 0.82
+  context: []
+
+MCC:
+  aliases:
+    - M.C.C.
+    - MC C
+  confidence: 0.85
+  context: []
+
+CBR:
+  aliases:
+    - Cyber
+    - Ciber
+    - Sidebar
+    - C.B.R.
+    - CBer
+  confidence: 0.90
+  context:
+    - review
+    - pending
+    - credit
+
+BCC:
+  aliases:
+    - PCC
+    - PCS
+    - B.C.C.
+    - PCB
+  confidence: 0.85
+  context: []
+
+SBRPS:
+  aliases:
+    - SBRP S
+    - S.B.R.P.S.
+    - Siberps
+  confidence: 0.88
+  context: []
+
+McCraken:
+  aliases:
+    - Mac cracker
+    - Mc cracker
+    - MacCraken
+    - McCracken
+    - Mac Craken
+    - McCreaken
+  confidence: 0.92
+  context: []
+
+Confidence Code:
+  aliases:
+    - Conference Code
+    - Confidence cold
+    - confident code
+  confidence: 0.88
+  context: []
+
+LoopPipe:
+  aliases:
+    - Look Pack
+    - Loop Pack
+    - LoopPack
+    - Loop pipe
+    - Looppipe
+  confidence: 0.88
+  context: []
+
+Spectra:
+  aliases:
+    - Spectro
+    - Spectre
+    - Spectra system
+  confidence: 0.87
+  context: []
+
+Webster:
+  aliases:
+    - Webstar
+    - Websters
+  confidence: 0.85
+  context: []
+
+PowerLender:
+  aliases:
+    - Power Lender
+    - Powerlender
+    - Power lender system
+  confidence: 0.88
+  context: []
+
+Sterling:
+  aliases:
+    - Stirling
+    - Sterlin
+  confidence: 0.85
+  context: []
+
+RTB High:
+  aliases:
+    - R.T.B. High
+    - RTB high
+    - RTP High
+  confidence: 0.90
+  context: []
+
+RTB Low:
+  aliases:
+    - R.T.B. Low
+    - RTB low
+    - RTP Low
+  confidence: 0.90
+  context: []
+
+Limited Monitoring:
+  aliases:
+    - Limited Monitor
+    - Limit Monitoring
+  confidence: 0.88
+  context: []
+
+Signature:
+  aliases:
+    - Signator
+    - Signal sure
+  confidence: 0.85
+  context: []
+
+Business Credit Center:
+  aliases:
+    - Business Credit Centre
+  confidence: 0.92
+  context: []
+
+Origination System:
+  aliases:
+    - Origin System
+    - Origination system
+  confidence: 0.88
+  context: []
+
+Loan Servicing System:
+  aliases:
+    - Loan servicing
+    - Loan Service System
+  confidence: 0.88
+  context: []
+
+Workout Group:
+  aliases:
+    - Work out Group
+    - Work out group
+    - workout group
+  confidence: 0.88
+  context: []

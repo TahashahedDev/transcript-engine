@@ -1,0 +1,156 @@
+# Transcript Engine — Vocabulary Correction Dictionary
+#
+# Format:
+#   canonical_term:
+#     aliases:
+#       - misspelling or mishearing 1
+#       - misspelling or mishearing 2
+#     fuzzy: true/false   (default: false — use exact word-boundary regex)
+#     case_sensitive: false (default: false — all matching is case-insensitive)
+#
+# Add new terms here. No code changes required.
+
+APPL_ID:
+  aliases:
+    - Apple ID
+    - Apple I
+    - AppleID
+    - Apple Id
+    - app ID
+    - app I.D.
+    - APLID
+
+LN:
+  aliases:
+    - Lane
+    - Ellen
+    - Elaine
+    - Len
+
+WL:
+  aliases:
+    - W.L.
+    - double-u L
+
+WCA:
+  aliases:
+    - W.C.A.
+    - WC A
+
+AL:
+  aliases:
+    - A.L.
+    - A L
+
+MCC:
+  aliases:
+    - M.C.C.
+    - MC C
+
+CBR:
+  aliases:
+    - Cyber
+    - Ciber
+    - Sidebar
+    - C.B.R.
+    - CBer
+
+BCC:
+  aliases:
+    - PCC
+    - PCS
+    - B.C.C.
+    - PCB
+
+SBRPS:
+  aliases:
+    - SBRP S
+    - S.B.R.P.S.
+    - Siberps
+
+McCraken:
+  aliases:
+    - Mac cracker
+    - Mc cracker
+    - MacCraken
+    - McCracken
+    - Mac Craken
+    - McCreaken
+
+Confidence Code:
+  aliases:
+    - Conference Code
+    - Confidence cold
+    - confident code
+
+LoopPipe:
+  aliases:
+    - Look Pack
+    - Loop Pack
+    - LoopPack
+    - Loop pipe
+    - Looppipe
+
+Spectra:
+  aliases:
+    - Spectro
+    - Spectre
+    - Spectra system
+
+Webster:
+  aliases:
+    - Webstar
+    - Websters
+
+PowerLender:
+  aliases:
+    - Power Lender
+    - Powerlender
+    - Power lender system
+
+Sterling:
+  aliases:
+    - Stirling
+    - Sterlin
+
+RTB High:
+  aliases:
+    - R.T.B. High
+    - RTB high
+    - RTP High
+
+RTB Low:
+  aliases:
+    - R.T.B. Low
+    - RTB low
+    - RTP Low
+
+Limited Monitoring:
+  aliases:
+    - Limited Monitor
+    - Limit Monitoring
+
+Signature:
+  aliases:
+    - Signator
+    - Signal sure
+
+Business Credit Center:
+  aliases:
+    - Business Credit Centre
+
+Origination System:
+  aliases:
+    - Origin System
+    - Origination system
+
+Loan Servicing System:
+  aliases:
+    - Loan servicing
+    - Loan Service System
+
+Workout Group:
+  aliases:
+    - Work out Group
+    - Work out group
+    - workout group

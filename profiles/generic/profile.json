@@ -1,0 +1,6 @@
+{
+  "name": "generic",
+  "description": "Universal cleanup rules with no industry-specific terminology",
+  "industry": "generic",
+  "processors": ["context_correction", "transcript_cleanup", "transcript_intelligence", "speaker_formatting"]
+}

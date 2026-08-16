@@ -1,0 +1,68 @@
+# ── Secrets ──────────────────────────────────────────────────────────────────
+# Never commit real credentials. Use .env.example / web/.env.local.example as
+# the tracked templates; those must contain placeholders only.
+.env
+.env.*
+!.env.example
+web/.env.local
+web/.env.*.local
+!web/.env.local.example
+*.pem
+*.key
+id_rsa*
+credentials.json
+service-account*.json
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+venv/
+.venv/
+env/
+ENV/
+
+# ── Tooling caches ───────────────────────────────────────────────────────────
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ── Node / Next.js ───────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.npm
+.eslintcache
+
+# ── Runtime output (generated per job — never source) ─────────────────────────
+outputs/
+temp/
+logs/
+*.log
+
+# ── Model caches / large binaries ────────────────────────────────────────────
+# Models are downloaded on demand into ~/.cache/transcript_engine by default;
+# these patterns guard against a cache ever being redirected into the repo.
+models/
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+
+# ── OS / editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

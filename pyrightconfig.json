@@ -1,0 +1,9 @@
+{
+  "include": ["transcript_engine", "api", "db", "tests", "scripts", "migrations"],
+  "extraPaths": ["."],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "reportMissingModuleSource": "none",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none"
+}
