@@ -158,15 +158,17 @@ bash start_server.sh
 
 ## GPU vs CPU
 
-| Mode | Backend | Expected time (90 min audio) |
+| Mode | Backend | Time for 90 min of audio |
 |---|---|---|
-| GPU | `TE_ASR_BACKEND=parakeet` | Target ~2–3 min on a 24 GB-class card — **not yet measured** |
-| CPU | `TE_ASR_BACKEND=whisper` | ~45–90 min |
+| GPU | `TE_ASR_BACKEND=parakeet` | Target ~2–3 min on a 24 GB-class card |
+| CPU | `TE_ASR_BACKEND=whisper` | Order of hours |
 
-> The GPU figure is a design target, not a benchmark. No validated production
-> measurement exists yet; the engine logs real-time factor (RTF) per job, so
-> record actual numbers on your hardware before quoting them. Throughput scales
-> with VRAM (larger chunks, fewer round trips), so a smaller card will be slower.
+> **Neither figure is a benchmark.** No validated measurement exists for either
+> path — the GPU number is a design target, and the CPU number is a rough order
+> of magnitude. The engine logs a real-time factor (RTF) for every job and the
+> diagnostics page breaks it down by stage, so measure on your own hardware
+> before quoting anything. GPU throughput scales with VRAM (larger chunks, fewer
+> round trips), so a smaller card will be slower.
 
 ---
 

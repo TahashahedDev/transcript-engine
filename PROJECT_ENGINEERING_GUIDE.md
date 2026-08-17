@@ -495,7 +495,38 @@ Further reading: [Server-Sent Events (MDN)](https://developer.mozilla.org/en-US/
 | Very long recording | Memory pressure across the whole pipeline | Bounded chunking + parallel diarization keep memory predictable |
 | Diarization fails entirely | No speaker segments available | Falls back to a single `SPEAKER_00` segment spanning the full audio |
 | Frontend disconnects mid-job | Client stops receiving progress | Job continues server-side; reconnecting resumes polling the same job ID |
-| Server restarts mid-job | In-memory job store is lost | **Not currently protected** — no persistence across restarts today |
+| Server restarts mid-job | In-memory job store is lost | **Not currently protected** — no persistence across restarts today; the UI shows "this job no longer exists" rather than hanging |
+| A fresh install resolves different library versions | Diarization breaks in ways that only appear on the new machine | `whisperx` and `pyannote.audio` are pinned as a compatible pair, and the pyannote API differences are handled in one place (below) |
+
+### The pyannote version trap
+
+Worth calling out, because it is the failure mode most likely to bite a fresh
+GPU box rather than the machine the code was written on.
+
+Two things this project touches moved between pyannote 3.x and 4.x:
+
+| | pyannote 3.x | pyannote 4.x |
+|---|---|---|
+| Token keyword on `Pipeline.from_pretrained` | `use_auth_token` | `token` |
+| Audio decoding backend | torchaudio / soundfile | torchcodec |
+
+Passing the wrong token keyword raises `TypeError: unexpected keyword argument`
+— at job time, not install time. And because the message contains the word
+"token", it is easy to misread as a credentials problem and go fix a setting
+that was already correct.
+
+Two defences, both in `transcript_engine/diarization/compat.py`:
+
+1. `load_pretrained_pipeline` inspects the actual function signature and passes
+   whichever keyword that build accepts, so both majors work.
+2. `apply_segmentation_step` guards the private `_segmentation` handle used to
+   tune the segmentation step. If a release restructures those internals, it
+   falls back to pyannote's default step — slower, still correct — instead of
+   raising mid-job.
+
+The version pin and the runtime shims are deliberately belt-and-braces: the pin
+makes a fresh install reproducible, the shims keep a future bump from being a
+hard failure.
 
 ---
 

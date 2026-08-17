@@ -4,6 +4,7 @@ import contextlib
 from typing import TYPE_CHECKING
 
 from transcript_engine.config.settings import DiarizationConfig
+from transcript_engine.diarization.compat import apply_segmentation_step
 from transcript_engine.diarization.exceptions import (
     DiarizationError,
     MissingHFTokenError,
@@ -52,21 +53,36 @@ class PyannoteEngine:
             with GPU_COMPUTE_LOCK:
                 pipeline = self._registry.get_diarization_pipeline(config)
         except Exception as exc:
-            if "token" in str(exc).lower() or "401" in str(exc):
+            # Matching on the word "token" anywhere in the message is too broad:
+            # a `TypeError: from_pretrained() got an unexpected keyword argument
+            # 'token'` — a pyannote API mismatch — was being reported to the user
+            # as "add your HuggingFace token", sending them to fix a setting that
+            # was already correct. Require an actual auth signal, and never
+            # reclassify a TypeError, which is by definition a calling bug here.
+            message = str(exc).lower()
+            is_auth_failure = (
+                not isinstance(exc, TypeError)
+                and (
+                    "401" in message
+                    or "unauthorized" in message
+                    or "authentication" in message
+                    or "gated" in message
+                    or "access to model" in message
+                    or "not authorized" in message
+                )
+            )
+            if is_auth_failure:
                 raise MissingHFTokenError(config.model_id) from exc
             raise DiarizationError(f"Failed to load diarization model: {exc}") from exc
 
-        # Apply configurable segmentation step.
-        # pipeline.segmentation_step is a plain attribute set at __init__ time;
-        # changing it afterwards has NO effect on the loaded Inference object.
-        # We must set _segmentation.step (in seconds) directly.
-        seg_inf = pipeline._segmentation  # pyannote.audio.core.inference.Inference
-        seg_inf.step = config.segmentation_step * float(seg_inf.duration)
+        step_seconds = apply_segmentation_step(pipeline, config.segmentation_step)
 
         logger.info(
-            f"Diarizing {audio.original_path.name} "
-            f"({audio.duration:.0f}s, seg_step={config.segmentation_step}, "
-            f"actual_step={seg_inf.step:.1f}s)"
+            "Diarizing %s (%.0fs, seg_step=%s, actual_step=%s)",
+            audio.original_path.name,
+            audio.duration,
+            config.segmentation_step,
+            f"{step_seconds:.1f}s" if step_seconds is not None else "library default",
         )
         if on_progress:
             on_progress(0.65, "Running speaker diarization")

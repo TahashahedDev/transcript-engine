@@ -30,9 +30,24 @@ export async function uploadJob(
   return res.json();
 }
 
+/**
+ * Thrown when the API answers, but says this job does not exist.
+ *
+ * Distinct from a network failure on purpose: jobs live in memory, so every job
+ * disappears when the server restarts. A caller that retries a 404 forever
+ * leaves the page on a spinner with no explanation.
+ */
+export class JobNotFoundError extends Error {
+  constructor(jobId: string) {
+    super(`Job ${jobId} no longer exists`);
+    this.name = 'JobNotFoundError';
+  }
+}
+
 export async function getJob(jobId: string): Promise<Job> {
   const res = await fetch(`${apiBase()}/api/jobs/${jobId}`);
-  if (!res.ok) throw new Error('Job not found');
+  if (res.status === 404) throw new JobNotFoundError(jobId);
+  if (!res.ok) throw new Error(`Could not load job (HTTP ${res.status})`);
   return res.json();
 }
 

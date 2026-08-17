@@ -10,6 +10,7 @@ from transcript_engine.config.settings import (
     Settings,
     TranscriptionConfig,
 )
+from transcript_engine.diarization.compat import load_pretrained_pipeline
 from transcript_engine.logging import get_logger
 
 logger = get_logger(__name__)
@@ -206,10 +207,8 @@ class ModelRegistry:
 
         cache_dir = str(self._settings.models_cache_dir / "pyannote")
         logger.info(f"Loading diarization model: {config.model_id}")
-        pipeline = Pipeline.from_pretrained(
-            config.model_id,
-            token=token,
-            cache_dir=cache_dir,
+        pipeline = load_pretrained_pipeline(
+            Pipeline, config.model_id, token, cache_dir=cache_dir
         )
 
         # On CUDA machines, run pyannote on GPU when there is real headroom.

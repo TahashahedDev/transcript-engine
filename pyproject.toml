@@ -13,8 +13,21 @@ license = { text = "MIT" }
 dependencies = [
     # Core ML
     "faster-whisper>=1.1.0,<2.0",
-    "whisperx>=3.1.6",
-    "pyannote.audio>=3.1.0,<4.1",
+    # whisperx and pyannote must be pinned as a pair.
+    #
+    # The diarization code targets the pyannote 3.x API: the private
+    # `_segmentation` handle used to set the segmentation step, the
+    # hf_hub_download shim in model_registry, and the `speaker-diarization-3.1`
+    # pipeline itself. whisperx changed its own requirement from
+    # `pyannote-audio<4.0` to `>=4.0` at version 3.8.0, so leaving whisperx
+    # unbounded drags pyannote 4.x in behind it — untested here, and it also
+    # switches pyannote's audio decoding to torchcodec.
+    #
+    # An unbounded range does not fail at install time; it fails on whichever
+    # fresh GPU box happens to resolve differently from the machine this was
+    # developed on. Pin both, together.
+    "whisperx>=3.7.0,<3.8",
+    "pyannote.audio>=3.3.2,<4.0",
     "torch>=2.3.0",
     "torchaudio>=2.3.0",
     "librosa>=0.10.0",
@@ -86,6 +99,11 @@ include = ["transcript_engine*", "db*"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
+# Ruff lints notebooks by default. These two are backend-comparison demos where
+# a configuration cell deliberately precedes the imports, so E402/I001 fire on
+# the intended structure rather than on a defect. Excluded rather than silenced
+# rule-by-rule; the notebooks are reference material, not shipped code.
+extend-exclude = ["notebooks/"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM"]

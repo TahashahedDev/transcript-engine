@@ -166,9 +166,13 @@ def _worker_diarize(
     # Monkey-patch hf_hub_download for pyannote/huggingface_hub compatibility.
     _patch_hf_hub()
 
-    pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
-    seg_inf = pipeline._segmentation
-    seg_inf.step = segmentation_step * float(seg_inf.duration)
+    from transcript_engine.diarization.compat import (  # noqa: PLC0415
+        apply_segmentation_step,
+        load_pretrained_pipeline,
+    )
+
+    pipeline = load_pretrained_pipeline(Pipeline, model_id, hf_token)
+    apply_segmentation_step(pipeline, segmentation_step)
 
     # Force CPU only — main process uses Metal for transcription.
     pipeline.to(torch.device("cpu"))

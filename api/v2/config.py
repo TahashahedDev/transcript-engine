@@ -4,9 +4,14 @@ from __future__ import annotations
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from transcript_engine.config.paths import project_root
+
 
 class V2Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="TE_", env_file=".env", extra="ignore")
+    # Project root rather than a CWD-relative ".env" — see db.config for why.
+    model_config = SettingsConfigDict(
+        env_prefix="TE_", env_file=project_root() / ".env", extra="ignore"
+    )
 
     # Cloudflare R2
     r2_account_id: str = ""

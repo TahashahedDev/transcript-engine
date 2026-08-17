@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 /* Tailwind v4 requires plugins to be registered from CSS. Without this the
    `prose` classes in MarkdownViewer are silently no-ops, and every generated

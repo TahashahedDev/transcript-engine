@@ -1,6 +1,14 @@
-# Transcript Engine — User Guide
+# Transcript Engine — CLI Guide
 
-A production-quality local AI meeting transcription engine that turns audio recordings into structured knowledge. All processing runs on your machine — no data leaves your environment.
+Reference for the `te` command line interface: transcription, profiles, review,
+search, and bundling. All processing runs on your machine — no audio leaves your
+environment.
+
+Looking for something else?
+
+- **Just want to transcribe a file?** [README](README.md) — `bash start.sh`, then use the web UI.
+- **How does it work internally?** [PROJECT_ENGINEERING_GUIDE.md](PROJECT_ENGINEERING_GUIDE.md)
+- **Running it on a rented GPU?** [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
@@ -61,7 +69,9 @@ Get a token at <https://huggingface.co/settings/tokens>, then accept the model t
 | Variable | Default | Description |
 |---|---|---|
 | `TE_HF_TOKEN` | — | HuggingFace token (required for diarization) |
-| `TE_PIPELINE__TRANSCRIPTION__MODEL_ID` | `large-v3` | Whisper model to use |
+| `TE_ASR_BACKEND` | `whisper` | `parakeet` (GPU, production) or `whisper` (CPU fallback) |
+| `TE_PIPELINE__TRANSCRIPTION__MODEL_ID` | `large-v3` | Whisper model — ignored when `TE_ASR_BACKEND=parakeet` |
+| `TE_PARAKEET_MODEL` | `nvidia/parakeet-tdt-0.6b-v2` | Parakeet model ID |
 | `TE_PIPELINE__TRANSCRIPTION__DEVICE` | `auto` | `auto`, `cpu`, `cuda`, or `mps` |
 | `TE_PIPELINE__TRANSCRIPTION__COMPUTE_TYPE` | `auto` | `int8`, `float16`, `float32` |
 | `TE_PIPELINE__TRANSCRIPTION__LANGUAGE` | auto-detect | Force language: `en`, `es`, etc. |
@@ -301,7 +311,11 @@ Either `--no-diarization` was used, or the HuggingFace token is missing/invalid.
 
 ### Slow on first run
 
-The engine downloads Whisper large-v3 (~3 GB), alignment model (~360 MB), and diarization model (~300 MB) once. Subsequent runs reuse the local cache at `~/.cache/transcript_engine/`.
+Models are downloaded once and then reused from the local cache at
+`~/.cache/transcript_engine/`. Which ones depends on the backend: Parakeet
+(~2.5 GB) for `TE_ASR_BACKEND=parakeet`, or Whisper large-v3 (~3 GB) plus the
+wav2vec2 alignment model (~360 MB) for the Whisper path. Speaker diarization
+adds ~300 MB either way.
 
 ### Wrong vocabulary corrections
 
@@ -316,7 +330,8 @@ To disable all corrections, use `--profile generic`.
 
 ### Low confidence on specific terms
 
-This is expected for proper nouns, acronyms, and technical terms that Whisper hasn't seen. Adding them to a vocabulary profile (`profiles/myprofile/vocabulary.yaml`) allows the engine to correct them post-transcription with high confidence.
+This is expected for proper nouns, acronyms, and technical terms the ASR model
+hasn't seen. Adding them to a vocabulary profile (`profiles/myprofile/vocabulary.yaml`) allows the engine to correct them post-transcription with high confidence.
 
 ### "Exported" shows wrong format
 
@@ -324,4 +339,7 @@ Only formats registered in the exporter registry are available: `markdown`, `jso
 
 ### macOS Apple Silicon — MPS device warning
 
-The engine automatically routes Whisper to CPU on Apple Silicon (MPS is not supported by CTranslate2). Alignment and diarization use MPS when available. This is expected behavior, not an error.
+The engine automatically routes Whisper to CPU on Apple Silicon (CTranslate2 has
+no MPS backend). Alignment and diarization use MPS when available. This is
+expected behaviour, not an error. Parakeet requires CUDA and is not available on
+Apple Silicon.

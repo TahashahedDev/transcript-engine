@@ -36,11 +36,34 @@ for arg in "$@"; do
 done
 
 # ── Load .env ─────────────────────────────────────────────────────────────────
+# Variables already present in the environment win over the file. Sourcing .env
+# unconditionally is the obvious implementation, but it silently overwrites what
+# the caller exported — so `TE_ASR_BACKEND=whisper bash start.sh` would appear to
+# do nothing, and a container platform's injected settings would be discarded in
+# favour of a checked-in default. Every other dotenv loader works the other way
+# round; match that.
+#
+# Written for bash 3.2 (what macOS ships): no associative arrays.
 if [ -f .env ]; then
+  _preserve=""
+  # [:blank:] is space and tab only — [:space:] would also strip the newlines
+  # that separate the keys, collapsing them into a single unusable token.
+  for _key in $(grep -oE '^[[:blank:]]*[A-Za-z_][A-Za-z0-9_]*[[:blank:]]*=' .env \
+                | tr -d '[:blank:]=' | sort -u); do
+    if [ -n "${!_key+x}" ]; then
+      _preserve="${_preserve}export ${_key}=$(printf '%q' "${!_key}")"$'\n'
+    fi
+  done
+
   set -o allexport
   # shellcheck disable=SC1091
   source .env
   set +o allexport
+
+  if [ -n "$_preserve" ]; then
+    eval "$_preserve"
+  fi
+  unset _preserve _key
 fi
 
 BACKEND_HOST="${TE_API_HOST:-0.0.0.0}"
@@ -62,11 +85,27 @@ fi
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 # ── Preflight ─────────────────────────────────────────────────────────────────
+# preflight_check.py validates a GPU production box: CUDA, NeMo, drivers. Those
+# are the right blockers on a rented GPU host, where starting with a broken CUDA
+# install just fails later and wastes paid time.
+#
+# On a machine with no NVIDIA GPU at all there is nothing to fix — the app runs
+# on CPU via the Whisper backend, which is the normal local-development path. So
+# the same failures are advisory there; treating them as fatal made the
+# documented macOS quick start impossible without --skip-preflight.
 if [ "$SKIP_PREFLIGHT" -eq 0 ] && [ -f scripts/preflight_check.py ]; then
   info "Running preflight checks..."
-  if ! "$PYTHON_BIN" scripts/preflight_check.py; then
+  if "$PYTHON_BIN" scripts/preflight_check.py; then
+    :
+  elif command -v nvidia-smi >/dev/null 2>&1; then
     echo ""
-    die "Preflight failed. Fix the items above, or re-run with --skip-preflight to start anyway."
+    die "Preflight failed on a GPU machine. Fix the items above, or re-run with --skip-preflight to start anyway."
+  else
+    echo ""
+    warn "No NVIDIA GPU detected — the GPU checks above do not apply here."
+    warn "Starting in CPU mode. Transcription will work but will be much slower,"
+    warn "and the Parakeet backend is unavailable (it requires CUDA)."
+    echo ""
   fi
 fi
 
@@ -81,8 +120,21 @@ if [ "$BACKEND_ONLY" -eq 0 ]; then
     (cd web && npm ci --silent) || die "npm ci failed in web/"
   fi
 
-  if [ ! -d web/.next ]; then
-    info "Building frontend (first run only, ~1 min)..."
+  # Rebuild when the sources are newer than the last build, not only when
+  # web/.next is missing. Otherwise `git pull && bash start.sh` silently serves
+  # the previous build — the UI looks like the update simply had no effect,
+  # which is a slow and confusing thing to diagnose.
+  _needs_build=0
+  if [ ! -f web/.next/BUILD_ID ]; then
+    _needs_build=1
+  elif [ -n "$(find web/app web/components web/hooks web/lib web/package.json \
+                    web/next.config.ts -newer web/.next/BUILD_ID 2>/dev/null | head -1)" ]; then
+    _needs_build=1
+    info "Frontend sources changed since the last build — rebuilding."
+  fi
+
+  if [ "$_needs_build" -eq 1 ]; then
+    info "Building frontend (~1 min)..."
     (cd web && npm run build) || die "Frontend build failed. Fix the errors above, then re-run."
   fi
 fi
@@ -198,8 +250,18 @@ else:
 print("ASR:      {}".format(d.get("asr_backend")))
 PYEOF
 
-GPU_LINE=$(curl -s --max-time 5 "http://127.0.0.1:${BACKEND_PORT}/health" 2>/dev/null \
-  | "$PYTHON_BIN" -c "$_GPU_SUMMARY_PY" 2>/dev/null || true)
+# Retried with a generous timeout: model warmup is running in a background
+# thread at this point and is CPU-bound in Python, which can starve the event
+# loop for several seconds. A single short request loses the race often enough
+# that the banner would print an empty GPU line on exactly the machines where
+# it matters most.
+GPU_LINE=""
+for _ in 1 2 3; do
+  GPU_LINE=$(curl -s --max-time 15 "http://127.0.0.1:${BACKEND_PORT}/health" 2>/dev/null \
+    | "$PYTHON_BIN" -c "$_GPU_SUMMARY_PY" 2>/dev/null || true)
+  if [ -n "$GPU_LINE" ]; then break; fi
+  sleep 2
+done
 
 # Public address matters on a rented GPU host, where the UI is opened from a
 # laptop rather than the machine itself. Prefer IPv4: providers commonly expose

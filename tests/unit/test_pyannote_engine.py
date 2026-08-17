@@ -181,3 +181,45 @@ class TestLoadFailureHandling:
 
 def test_gpu_compute_lock_is_a_real_lock() -> None:
     assert isinstance(GPU_COMPUTE_LOCK, type(threading.Lock()))
+
+
+class TestLoadErrorClassification:
+    """
+    A pyannote API mismatch must not be reported as a credentials problem.
+
+    Regression: `Pipeline.from_pretrained` is named `use_auth_token` in pyannote
+    3.x and `token` in 4.x. Calling it with the wrong one raises
+    `TypeError: ... unexpected keyword argument 'token'`, and the old check
+    ("token" appears anywhere in the message) turned that into "add your
+    HuggingFace token" — pointing the user at a setting that was already right.
+    """
+
+    def test_type_error_mentioning_token_is_not_a_token_error(self, tmp_path) -> None:  # type: ignore[no-untyped-def]
+        registry = MagicMock()
+        registry.get_diarization_pipeline.side_effect = TypeError(
+            "Pipeline.from_pretrained() got an unexpected keyword argument 'token'"
+        )
+        engine = PyannoteEngine(registry)
+
+        with pytest.raises(DiarizationError) as excinfo:
+            engine.diarize(_audio(tmp_path), DiarizationConfig())
+
+        assert not isinstance(excinfo.value, MissingHFTokenError)
+        # The real cause has to survive into the message the user sees.
+        assert "unexpected keyword argument" in str(excinfo.value)
+
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "401 Client Error: Unauthorized",
+            "Could not download model: it is gated",
+            "You are not authorized to access this repo",
+        ],
+    )
+    def test_genuine_auth_failures_still_map_to_token_error(self, tmp_path, message) -> None:  # type: ignore[no-untyped-def]
+        registry = MagicMock()
+        registry.get_diarization_pipeline.side_effect = RuntimeError(message)
+        engine = PyannoteEngine(registry)
+
+        with pytest.raises(MissingHFTokenError):
+            engine.diarize(_audio(tmp_path), DiarizationConfig())

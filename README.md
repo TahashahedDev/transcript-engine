@@ -112,25 +112,29 @@ Everything is set through `.env` (see `.env.example`). The most useful:
 | `TE_API_PORT` / `TE_FRONTEND_PORT` | `9097` / `9098` | Service ports |
 | `TE_PIPELINE__PARAKEET__CHUNK_SECONDS` | `0` (auto) | Override VRAM-based chunk sizing |
 | `TE_API_STALL_TIMEOUT_MINUTES` | `45` | Fail a job that stops making progress |
+| `TE_AI_BASE_URL` + `TE_AI_MODEL` | — | Enables the optional AI grammar pass |
 
 Relative paths are resolved against the project root, so the app behaves the
-same regardless of which directory you launch it from.
+same regardless of which directory you launch it from. Variables already set in
+your environment take precedence over `.env`.
 
 ---
 
 ## Development
 
 ```bash
-make install          # dependencies
-pytest tests/unit -q  # test suite
-ruff check .          # lint
-mypy transcript_engine api   # types
+make install          # create .venv and install everything
+make check            # lint + typecheck + tests
+make test             # tests only
 
 cd web && npm run dev # web UI with hot reload
 ```
 
-Architecture, design decisions, and the reasoning behind them are documented in
-[PROJECT_ENGINEERING_GUIDE.md](PROJECT_ENGINEERING_GUIDE.md).
+| Document | What it covers |
+|---|---|
+| [PROJECT_ENGINEERING_GUIDE.md](PROJECT_ENGINEERING_GUIDE.md) | How the ML pipeline works, and why it is built this way |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Running on a rented GPU host, start to finish |
+| [USER_GUIDE.md](USER_GUIDE.md) | The `te` command line interface |
 
 ---
 
@@ -148,3 +152,6 @@ Stated plainly rather than buried:
   but the worker thread cannot be killed and holds the single-job executor until
   the process restarts.
 - **Overlapping speech degrades both transcription and speaker attribution.**
+- **The cloud API (`/api/v2`) is unfinished.** Its endpoints, PostgreSQL schema,
+  and R2/Supabase wiring exist, but no worker consumes the queue — a job created
+  there stays `queued`. It is off unless `TE_ENABLE_CLOUD_API=1`.

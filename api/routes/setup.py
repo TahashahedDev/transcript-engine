@@ -61,6 +61,11 @@ class SetupCheckResponse(BaseModel):
     # Surfaced so the upload UI enforces the same limit the server does,
     # rather than hardcoding its own number that can drift out of sync.
     max_upload_mb: int = 2000
+    # Whether the optional LLM grammar pass is configured. It is the only thing
+    # the "Standard"/"Archive" mode adds over "Quick"/"Balanced", and it skips
+    # itself silently when unset — so without this the UI would offer a mode
+    # that produces byte-identical output to the cheaper one.
+    ai_grammar_available: bool = False
     gpu: GpuStatus = GpuStatus(available=False)
 
 
@@ -340,6 +345,9 @@ async def check_setup() -> SetupCheckResponse:
         parakeet_model=parakeet_model,
         max_upload_mb=config.max_upload_mb,
         gpu=gpu_status,
+        ai_grammar_available=bool(
+            os.environ.get("TE_AI_BASE_URL") and os.environ.get("TE_AI_MODEL")
+        ),
     )
 
 

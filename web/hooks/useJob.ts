@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { getJob } from '@/lib/api';
+import { getJob, JobNotFoundError } from '@/lib/api';
 import type { Job } from '@/lib/types';
 
 // Poll every 8s while running/queued — SSE handles real-time progress.
@@ -29,8 +29,19 @@ export function useJob(jobId: string | null, sseCompleted?: boolean) {
         setLoading(false);
         if (j.status === 'completed' || j.status === 'failed') return;
         timerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
-      } catch {
+      } catch (err) {
         if (!activeRef.current) return;
+        // A 404 is final — jobs are held in memory, so a server restart drops
+        // them permanently and no amount of retrying will bring one back.
+        // Retrying it anyway left the page on "Loading…" forever, which reads
+        // as a hung app rather than an expired link.
+        // `job` stays null, which the page renders as "this job no longer
+        // exists" — a state that was previously unreachable.
+        if (err instanceof JobNotFoundError) {
+          setLoading(false);
+          return;
+        }
+        // Anything else (server down, network blip) may well recover.
         timerRef.current = setTimeout(poll, ERROR_RETRY_MS);
       }
     }

@@ -149,11 +149,17 @@ export function ProgressView({
   const expectedStageDuration = STAGE_EXPECTED_SECONDS[currentStage] ?? 60;
   const stageSlow = stageElapsed > expectedStageDuration && currentStage !== 'Completed';
 
-  // Streaming pipeline + batch_size=1: ~1.5x RTF on M1 (midpoint between 1.93x cold and 1.12x sustained under thermal load)
-  const estimatedTotal = audioDuration ? Math.ceil(audioDuration / 1.5) : null;
+  // Extrapolate from this run's own progress rather than from a fixed
+  // real-time factor. The previous version divided the audio duration by a
+  // constant measured on one Apple Silicon laptop, which is off by a large
+  // factor on an NVIDIA GPU — the machine this is actually deployed to — and
+  // would quote tens of minutes for a job finishing in a few.
+  //
+  // Held back until 10% so the first few seconds, where `fraction` is tiny and
+  // dominated by model loading, cannot produce an absurd projection.
   const estimatedRemaining =
-    estimatedTotal && fraction > 0.05
-      ? Math.max(0, Math.ceil(estimatedTotal * (1 - fraction)))
+    fraction > 0.1 && elapsed > 5
+      ? Math.max(0, Math.ceil((elapsed * (1 - fraction)) / fraction))
       : null;
 
   if (error) {
@@ -196,9 +202,6 @@ export function ProgressView({
         {audioDuration != null && (
           <p className="text-xs text-slate-400 mt-1">
             Audio: {fmtSeconds(Math.round(audioDuration))}
-            {estimatedTotal && (
-              <> · Estimated: ~{fmtSeconds(estimatedTotal)}</>
-            )}
           </p>
         )}
       </div>

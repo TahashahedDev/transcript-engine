@@ -17,30 +17,38 @@ const TIMESTAMP_MODES = [
   { value: 'minute', label: 'Per minute' },
 ];
 
+// The `speed` field is deliberately relative ("Fastest", "Slower") rather than
+// an estimated duration. Run time depends on recording length and on the GPU,
+// and no benchmark has been recorded for either, so a concrete "~45 min" would
+// be a number the project cannot stand behind. The ordering below is real: it
+// follows from the model size, beam width, and processor count each mode uses
+// (see PIPELINE_MODES in config/settings.py).
 const WHISPER_MODES = [
   {
     value: 'fast',
     label: 'Fast',
-    description: 'Distil-Whisper · no alignment',
-    expected: '5–10 min',
+    description: 'Distil-Whisper · no forced alignment',
+    speed: 'Fastest',
   },
   {
     value: 'balanced',
     label: 'Balanced',
-    description: 'Whisper turbo · word timestamps',
-    expected: '20–30 min',
+    description: 'Whisper turbo · word timestamps · meeting intelligence',
+    speed: 'Faster',
   },
   {
     value: 'high_accuracy',
     label: 'High Accuracy',
     description: 'Whisper large-v3 · beam search',
-    expected: '~45 min',
+    speed: 'Slower',
   },
   {
     value: 'archive',
     label: 'Archive',
-    description: 'large-v3 · AI grammar pass',
-    expected: '~90 min',
+    description: 'High Accuracy + AI grammar pass',
+    speed: 'Slowest',
+    // What this mode collapses to when the AI grammar pass is unavailable.
+    sameAsWithoutAiGrammar: 'High Accuracy',
   },
 ];
 
@@ -48,18 +56,21 @@ const WHISPER_MODES = [
 // post-processors run (see PIPELINE_MODES in config/settings.py). Quick is
 // the minimum-processing, fastest safe path; Standard adds an AI grammar
 // correction pass on top for cleaner prose at the cost of extra time.
+// Speaker diarization is not listed: it runs in both modes, so naming it under
+// one would imply the other skips it.
 const PARAKEET_MODES = [
   {
     value: 'balanced',
     label: 'Quick',
-    description: 'Speaker diarization · meeting intelligence',
-    expected: '< 2 min',
+    description: 'Vocabulary correction · cleanup · meeting intelligence',
+    speed: 'Faster',
   },
   {
     value: 'archive',
     label: 'Standard',
     description: 'Quick + AI grammar correction',
-    expected: '3–5 min',
+    speed: 'Slower',
+    sameAsWithoutAiGrammar: 'Quick',
   },
 ];
 
@@ -91,6 +102,10 @@ export default function HomePage() {
 
   const isParakeet = setup?.asr_backend === 'parakeet';
   const activeModes = isParakeet ? PARAKEET_MODES : WHISPER_MODES;
+  // The AI grammar pass is the only thing the top mode adds, and the backend
+  // skips it silently when TE_AI_BASE_URL / TE_AI_MODEL are unset. Say so,
+  // instead of offering a slower mode whose output is byte-identical.
+  const aiGrammarOff = setup !== null && !setup.ai_grammar_available;
   // Until /setup/check answers we don't know which backend is running, so the
   // mode list is a guess. Showing skeletons avoids flashing Whisper's four
   // modes and then swapping them for Parakeet's two a moment later.
@@ -220,6 +235,7 @@ export default function HomePage() {
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Processing mode">
                     {activeModes.map((m) => {
                       const selected = mode === m.value;
+                      const collapsesTo = aiGrammarOff ? m.sameAsWithoutAiGrammar : undefined;
                       return (
                         <button
                           key={m.value}
@@ -237,9 +253,15 @@ export default function HomePage() {
                             <span className={`text-sm font-medium ${selected ? 'text-indigo-700' : 'text-slate-800'}`}>
                               {m.label}
                             </span>
-                            <span className="shrink-0 text-xs tabular-nums text-slate-400">{m.expected}</span>
+                            <span className="shrink-0 text-xs text-slate-400">{m.speed}</span>
                           </div>
                           <p className="mt-0.5 text-xs text-slate-500">{m.description}</p>
+                          {collapsesTo && (
+                            <p className="mt-1 text-xs text-amber-600">
+                              AI grammar is not configured — this currently produces the same
+                              result as {collapsesTo}.
+                            </p>
+                          )}
                         </button>
                       );
                     })}

@@ -151,19 +151,26 @@ pass "pip upgraded"
 # ── 4. PyTorch with CUDA ──────────────────────────────────────────────────────
 step "4/9  PyTorch + CUDA"
 
-info "Installing PyTorch (CUDA ${CUDA_VER}, index=${TORCH_CUDA_TAG})..."
-pip install torch torchaudio --index-url "$TORCH_INDEX" --quiet
-
-# Verify CUDA is actually available
-CUDA_CHECK=$(python -c "
+# Reports "PASS: <gpu> — <n> GB VRAM" or "FAIL: <reason>".
+_cuda_check() {
+  python -c "
 import torch
-ok = torch.cuda.is_available()
-if ok:
-    print(f'PASS: {torch.cuda.get_device_name(0)} — {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB VRAM')
+if torch.cuda.is_available():
+    p = torch.cuda.get_device_properties(0)
+    print(f'PASS: {torch.cuda.get_device_name(0)} — {p.total_memory / 1e9:.1f} GB VRAM (torch {torch.__version__})')
 else:
-    print('FAIL: torch.cuda.is_available() returned False')
-" 2>&1)
+    print(f'FAIL: torch.cuda.is_available() is False (torch {torch.__version__})')
+" 2>&1
+}
 
+_install_cuda_torch() {
+  pip install torch torchaudio --index-url "$TORCH_INDEX" --quiet
+}
+
+info "Installing PyTorch (CUDA ${CUDA_VER}, index=${TORCH_CUDA_TAG})..."
+_install_cuda_torch
+
+CUDA_CHECK=$(_cuda_check)
 if echo "$CUDA_CHECK" | grep -q "^PASS"; then
   pass "PyTorch CUDA: $CUDA_CHECK"
 else
@@ -198,6 +205,27 @@ else
   warnc "NeMo install failed (pip returned non-zero)"
   warnc "Try manually: pip install 'nemo_toolkit[asr]>=1.23.0'"
   warnc "Parakeet ASR will not be available. Whisper backend still works."
+fi
+
+# Both installs above can pull a different torch to satisfy their own pins
+# (NeMo in particular is strict about the version). pip would then take that
+# replacement from PyPI rather than the CUDA index selected for this driver,
+# which is how a box ends up with a working install that quietly cannot see the
+# GPU. Re-check, and put the CUDA build back if it was displaced.
+info "Re-verifying CUDA after dependency installs..."
+CUDA_CHECK=$(_cuda_check)
+if echo "$CUDA_CHECK" | grep -q "^PASS"; then
+  pass "PyTorch CUDA still intact: $CUDA_CHECK"
+else
+  warnc "A dependency replaced PyTorch and CUDA is no longer available — reinstalling the ${TORCH_CUDA_TAG} build."
+  _install_cuda_torch
+  CUDA_CHECK=$(_cuda_check)
+  if echo "$CUDA_CHECK" | grep -q "^PASS"; then
+    pass "PyTorch CUDA restored: $CUDA_CHECK"
+  else
+    fail "CUDA unavailable after reinstall: $CUDA_CHECK"
+    err "Resolve manually: pip install torch torchaudio --index-url ${TORCH_INDEX}"
+  fi
 fi
 
 # ── 6. Environment (.env) ─────────────────────────────────────────────────────

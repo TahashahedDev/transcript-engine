@@ -184,14 +184,32 @@ else:
 app.add_middleware(CORSMiddleware, **_cors_kwargs)
 
 from api.routes import artifacts, diagnostics, jobs, progress, setup  # noqa: E402
-from api.v2.routes import jobs as jobs_v2  # noqa: E402
 
 app.include_router(jobs.router, prefix="/api")
 app.include_router(artifacts.router, prefix="/api")
 app.include_router(progress.router, prefix="/api")
 app.include_router(setup.router, prefix="/api")
 app.include_router(diagnostics.router, prefix="/api")
-app.include_router(jobs_v2.router)
+
+# ── Cloud API (v2) — opt-in, incomplete ──────────────────────────────────────
+# /api/v2/jobs stores jobs in PostgreSQL and audio in Cloudflare R2. The
+# endpoints and schema exist, but nothing consumes the queue: a job created
+# there is written with status "queued" and stays that way forever. Mounting it
+# by default would advertise an API that silently never finishes work, so it is
+# off unless explicitly enabled.
+#
+# Keeping it behind the flag also keeps its import side effects out of the
+# default path — importing it builds a SQLAlchemy async engine, which raises at
+# import time (and so prevents the server from starting at all) if
+# TE_DATABASE_URL is set to a non-async driver URL.
+if os.environ.get("TE_ENABLE_CLOUD_API", "").lower() in ("1", "true", "yes"):
+    from api.v2.routes import jobs as jobs_v2  # noqa: E402, PLC0415
+
+    app.include_router(jobs_v2.router)
+    _log.warning(
+        "Cloud API (/api/v2) enabled. Note: no worker consumes the v2 job "
+        "queue — jobs created there stay 'queued'."
+    )
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────

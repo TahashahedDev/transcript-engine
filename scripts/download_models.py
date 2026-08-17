@@ -60,21 +60,27 @@ def _patch_torch_load() -> None:
     pyannote and NeMo checkpoints that use omegaconf/typing objects. Restore
     pre-2.6 behaviour for callers that don't specify weights_only explicitly.
     """
+    # Only the import is tolerated failing (torch genuinely absent). The patch
+    # itself is not wrapped: a previous version had a typo here that raised
+    # AttributeError, which a broad `except (ImportError, AttributeError): pass`
+    # swallowed — so the patch silently never applied and the failure surfaced
+    # later as an unpickling error during model download.
     try:
         import torch
-        if getattr(torch.load, "_te_patched", False):
-            return
-        _orig = torch.loadp
+    except ImportError:
+        return
 
-        def _patched(*args: Any, **kwargs: Any) -> Any:
-            if kwargs.get("weights_only") is not True:
-                kwargs["weights_only"] = False
-            return _orig(*args, **kwargs)
+    if getattr(torch.load, "_te_patched", False):
+        return
+    _orig = torch.load
 
-        cast(Any, _patched)._te_patched = True
-        torch.load = _patched
-    except (ImportError, AttributeError):
-        pass
+    def _patched(*args: Any, **kwargs: Any) -> Any:
+        if kwargs.get("weights_only") is not True:
+            kwargs["weights_only"] = False
+        return _orig(*args, **kwargs)
+
+    cast(Any, _patched)._te_patched = True
+    torch.load = _patched
 
 
 def _patch_hf_hub() -> None:

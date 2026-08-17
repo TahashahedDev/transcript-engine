@@ -114,6 +114,7 @@ export interface SetupCheckResponse {
   parakeet_model: string | null;
   max_upload_mb: number;
   gpu: GpuStatus;
+  ai_grammar_available: boolean;
 }
 
 export interface ArtifactsResponse {
