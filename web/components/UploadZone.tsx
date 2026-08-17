@@ -81,7 +81,7 @@ export function UploadZone({ onFile, maxUploadMb = DEFAULT_MAX_UPLOAD_MB }: Prop
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
-        className={`flex min-h-[13.75rem] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+        className={`flex min-h-55 w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-10 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
           dragging
             ? 'border-indigo-500 bg-indigo-50'
             : file
