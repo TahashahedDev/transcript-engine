@@ -187,3 +187,21 @@ Stated plainly rather than buried:
 - **The cloud API (`/api/v2`) is unfinished.** Its endpoints, PostgreSQL schema,
   and R2/Supabase wiring exist, but no worker consumes the queue — a job created
   there stays `queued`. It is off unless `TE_ENABLE_CLOUD_API=1`.
+
+---
+
+## License & Usage
+
+This repository is public for portfolio and evaluation purposes. It is **not**
+open-source: viewing or cloning it does not grant any license to use, copy,
+modify, or redistribute the code. See [LICENSE](LICENSE) for the full terms.
+
+The code and documentation in this repository are original work. The ASR,
+diarization, and framework components it depends on — NVIDIA NeMo/Parakeet,
+Whisper/WhisperX, pyannote.audio, PyTorch, FastAPI, Next.js, and others — are
+third-party open-source projects, each under its own license; this project
+does not claim ownership of them. See each dependency's own repository for its
+license terms.
+
+Found a security issue? See [SECURITY.md](SECURITY.md) for how to report it
+privately.

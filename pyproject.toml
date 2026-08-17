@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Production-quality local AI meeting transcription engine"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = { text = "Proprietary" }
 
 dependencies = [
     # Core ML

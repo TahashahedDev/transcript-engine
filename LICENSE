@@ -1,0 +1,45 @@
+Copyright (c) 2026 Taha Shahed. All rights reserved.
+
+This repository is made publicly viewable for portfolio and evaluation
+purposes only. It is NOT open-source software, and no license, express or
+implied, is granted by making it publicly visible.
+
+1. OWNERSHIP
+
+   All source code, documentation, and other content in this repository
+   ("the Software") are the property of the copyright holder named above.
+   Viewing, cloning, or forking this repository does not transfer any
+   ownership or grant any rights beyond those explicitly stated below.
+
+2. PERMITTED USE
+
+   You may view the Software and run it locally for your own personal,
+   non-commercial evaluation.
+
+3. RESTRICTED USE
+
+   Except as permitted in Section 2, no part of the Software may be copied,
+   modified, merged, published, distributed, sublicensed, sold, or used to
+   create derivative works, in whole or in part, and the Software may not be
+   used for any commercial purpose, without the copyright holder's prior
+   written permission. Requests may be directed to the contact listed in the
+   repository.
+
+4. THIRD-PARTY COMPONENTS
+
+   The Software depends on third-party open-source libraries and models
+   (for example, PyTorch, FastAPI, Next.js, NVIDIA NeMo/Parakeet, pyannote.audio,
+   and Whisper/WhisperX), each distributed under its own license by its
+   respective owner. This notice covers only the original code and
+   documentation authored in this repository; it does not grant, restrict, or
+   otherwise alter the rights or obligations attached to any third-party
+   component, and does not claim ownership of any third-party component.
+   Consult each dependency's own license and documentation for its terms.
+
+5. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY
+   ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
