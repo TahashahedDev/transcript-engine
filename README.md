@@ -11,6 +11,37 @@ audio/video ─► preprocess ─► ASR ─────────┐
                           (pyannote)
 ```
 
+ASR defaults to Whisper/WhisperX (CPU-friendly, no GPU needed) and switches to
+NVIDIA Parakeet-TDT on CUDA hardware — see [Configuration](#configuration).
+Long recordings are split into VRAM-sized, overlapping chunks rather than
+processed as one block, and diarization runs in parallel with transcription
+where the hardware allows it. Details in
+[PROJECT_ENGINEERING_GUIDE.md](PROJECT_ENGINEERING_GUIDE.md).
+
+---
+
+## Features
+
+- Speaker-labelled transcripts with word-level timestamps
+- Automatic meeting intelligence: summary, action items, decisions, open
+  questions, topic timeline
+- Five export formats plus a single ZIP bundle (see [Output](#output))
+- Live progress over SSE — per-stage status, not just a spinner
+- GPU-aware: detects available VRAM at runtime and sizes chunking accordingly;
+  runs on CPU when no GPU is present
+- Domain vocabulary profiles (e.g. banking terms) for post-transcription
+  correction
+
+## Technology stack
+
+| Layer | Choice |
+|---|---|
+| ASR | NVIDIA Parakeet-TDT (NeMo, GPU) · Faster-Whisper/WhisperX (CPU fallback) |
+| Diarization | pyannote.audio |
+| Backend | FastAPI, Python 3.12+ |
+| Frontend | Next.js 16, React 19, Tailwind v4 |
+| Storage | Filesystem for jobs/artifacts; PostgreSQL schema exists but is not yet wired in (see [Limitations](#current-limitations)) |
+
 ---
 
 ## Quick start
@@ -20,7 +51,7 @@ audio/video ─► preprocess ─► ASR ─────────┐
 diarization).
 
 ```bash
-git clone <your-repo-url> transcript-engine
+git clone https://github.com/TahashahedDev/transcript-engine.git
 cd transcript-engine
 
 cp .env.example .env
@@ -125,9 +156,10 @@ your environment take precedence over `.env`.
 ```bash
 make install          # create .venv and install everything
 make check            # lint + typecheck + tests
-make test             # tests only
+make test             # backend tests only
 
-cd web && npm run dev # web UI with hot reload
+cd web && npm run typecheck && npm run lint && npm run build   # frontend checks
+cd web && npm run dev                                          # web UI with hot reload
 ```
 
 | Document | What it covers |
