@@ -297,8 +297,8 @@ fi
 step "9/9  Final Validation"
 
 info "Running preflight checks..."
-python scripts/preflight_check.py
-PREFLIGHT_EXIT=$?
+PREFLIGHT_EXIT=0
+python scripts/preflight_check.py || PREFLIGHT_EXIT=$?
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""

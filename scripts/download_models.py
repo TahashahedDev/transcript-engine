@@ -191,14 +191,13 @@ def download_pyannote() -> None:
         print("  Run: pip install -e \".\"")
         sys.exit(1)
 
+    from transcript_engine.diarization.compat import load_pretrained_pipeline
+
     _patch_torch_load()
     _patch_hf_hub()
 
     try:
-        pipeline = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1",
-            token=token,
-        )
+        pipeline = load_pretrained_pipeline(Pipeline, "pyannote/speaker-diarization-3.1", token)
     except Exception as exc:
         msg = str(exc)
         print(f"\nERROR: Failed to download pyannote: {msg}")
