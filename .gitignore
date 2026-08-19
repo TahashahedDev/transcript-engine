@@ -52,7 +52,11 @@ logs/
 # ── Model caches / large binaries ────────────────────────────────────────────
 # Models are downloaded on demand into ~/.cache/transcript_engine by default;
 # these patterns guard against a cache ever being redirected into the repo.
-models/
+# Anchored to repo root (leading /) so it does not also match the
+# transcript_engine/models/ *source* package — an unanchored "models/" pattern
+# previously matched at any depth and silently excluded that whole package
+# from every commit, which is what caused ModuleNotFoundError on a fresh clone.
+/models/
 *.ckpt
 *.pt
 *.pth
