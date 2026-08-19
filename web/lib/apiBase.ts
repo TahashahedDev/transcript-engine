@@ -11,10 +11,12 @@
  * Resolution order:
  *   1. NEXT_PUBLIC_API_URL — explicit override; use when the API lives on a
  *      different host/domain than the UI (separate domains, reverse proxy).
- *   2. Same host as the page, on the API port. Correct for the normal
- *      deployment where both services run on one box: open the UI at
- *      http://<host>:9098 and the API is found at http://<host>:9097,
- *      whether <host> is localhost or a rented GPU's public IP.
+ *   2. Same-origin relative base ('' ). The browser never talks to the API
+ *      port directly — requests to `${apiBase()}/api/...` resolve to
+ *      `/api/...` on the page's own origin, which app/api/[...path]/route.ts
+ *      proxies server-side to http://127.0.0.1:9097. This is what lets the
+ *      API stay unexposed on hosts (like Vast.ai) that only forward the
+ *      frontend's port: the browser only ever needs to reach :9098.
  *   3. localhost fallback — only reached during SSR/prerender, where there is
  *      no window and no request is actually issued to the API.
  */
@@ -26,8 +28,7 @@ export function resolveApiBase(): string {
   if (configured) return configured.replace(/\/+$/, '');
 
   if (typeof window !== 'undefined') {
-    const port = process.env.NEXT_PUBLIC_API_PORT ?? DEFAULT_API_PORT;
-    return `${window.location.protocol}//${window.location.hostname}:${port}`;
+    return '';
   }
 
   return `http://localhost:${DEFAULT_API_PORT}`;
