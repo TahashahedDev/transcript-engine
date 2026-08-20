@@ -68,6 +68,12 @@ dependencies = [
     "uvicorn[standard]>=0.29.0",
     "python-multipart>=0.0.9",
     "sse-starlette>=2.1.0",
+
+    # OpenAI-compatible client for the optional AI grammar pass
+    # (processors/ai_grammar.py) and meeting-intelligence LLM backend
+    # (intelligence/ai_backend.py). Works against any OpenAI-compatible
+    # endpoint, including a local Ollama server — not just OpenAI itself.
+    "openai>=1.30.0,<2.0",
 ]
 
 [project.optional-dependencies]
