@@ -22,8 +22,13 @@ const BACKEND_ORIGIN = `http://127.0.0.1:${process.env.TE_API_PORT ?? '9097'}`;
 // Hop-by-hop / connection-specific headers: forwarding these verbatim between
 // two different HTTP connections is incorrect (Content-Length in particular
 // must be recomputed by whichever layer actually serializes the body, not
-// copied from the other hop).
-const STRIP_REQUEST_HEADERS = new Set(['host', 'connection', 'content-length']);
+// copied from the other hop). `expect` is here because Node's fetch (undici)
+// does not implement the 100-continue handshake at all: passing through a
+// client's `Expect: 100-continue` (which curl -F and some browsers add
+// automatically for large multipart bodies) makes undici throw synchronously
+// — "NotSupportedError: expect header not supported" — before any network
+// I/O happens, which surfaces here as an opaque 502 "fetch failed".
+const STRIP_REQUEST_HEADERS = new Set(['host', 'connection', 'content-length', 'expect']);
 const STRIP_RESPONSE_HEADERS = new Set(['connection', 'transfer-encoding', 'content-encoding']);
 
 function upstreamUrl(path: string[], search: string): string {
