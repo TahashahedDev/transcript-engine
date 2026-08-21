@@ -340,6 +340,20 @@ class Pipeline:
                 transcript.word_count, len(transcript.segments),
             )
 
+            # Speaker identification (SPEAKER_00 → a real name) — off by
+            # default, opt-in via TE_SPEAKER_ID_ENABLED=1. Runs here because
+            # this is the first point where a speaker-attributed Transcript
+            # and the raw diarization segments (needed to pick embedding
+            # windows) both exist. Wrapped so that any failure — a missing
+            # HF token, an unavailable embedding model, a corrupt profile
+            # file — degrades to "no identification this run" rather than
+            # failing a transcription job over a feature that only adds
+            # display names.
+            if os.environ.get("TE_SPEAKER_ID_ENABLED") == "1":
+                t0 = time.monotonic()
+                transcript = self._apply_speaker_identification(transcript, diarization, audio)
+                timings["speaker_id"] = time.monotonic() - t0
+
             _progress(on_progress, "process", 0.0, "Running processors")
             t0 = time.monotonic()
             ctx = ProcessorContext(profile_name=self._profile.name)
@@ -387,6 +401,40 @@ class Pipeline:
                     100 * (words_before - words_after) / words_before,
                 )
         return transcript
+
+    def _apply_speaker_identification(
+        self, transcript: Transcript, diarization: DiarizationResult, audio: Any
+    ) -> Transcript:
+        """
+        Best-effort: match diarized speakers against known SpeakerProfiles
+        and self-introduction evidence, per transcript_engine.identity. Never
+        raises — a transcription job must not fail because a display-name
+        feature couldn't run.
+        """
+        try:
+            from transcript_engine.identity.embedding_extractor import (  # noqa: PLC0415
+                SpeakerEmbeddingExtractor,
+            )
+            from transcript_engine.identity.pipeline import identify_speakers  # noqa: PLC0415
+            from transcript_engine.identity.store import SpeakerProfileStore  # noqa: PLC0415
+
+            diar_tuples = [(s.speaker_id, s.start, s.end) for s in diarization.segments]
+            hf_token = self._registry._settings.hf_token  # noqa: SLF001
+            extractor = SpeakerEmbeddingExtractor(hf_token=hf_token)
+            store = SpeakerProfileStore()
+
+            transcript, results = identify_speakers(
+                transcript, audio.path, diar_tuples, extractor, store, job_id=transcript.id
+            )
+            for r in results:
+                logger.info(
+                    "Speaker identification: %s -> %s (%s)",
+                    r.speaker_id, r.display_name or "unknown", r.confidence,
+                )
+            return transcript
+        except Exception as exc:
+            logger.warning("Speaker identification skipped (non-fatal): %s", exc)
+            return transcript
 
     def _build_processors(self) -> list[Any]:
         processor_names = self._profile.processors
